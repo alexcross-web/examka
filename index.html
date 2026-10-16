@@ -113,7 +113,7 @@
             max-width: 420px;
         }
 
-        /* Контейнер для спиннера на втором экране (вместо кнопки) */
+        /* Контейнер для спиннера на втором экране */
         .button-loader-zone {
             height: 60px;
             display: flex;
@@ -139,19 +139,6 @@
             cursor: pointer;
             font-weight: 500;
         }
-
-        /* СКРЫТЫЙ СЛУЖЕБНЫЙ ФРЕЙМ */
-        #app-frame {
-            display: none;
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border: none;
-            z-index: 99997;
-            background-color: #0b0f19;
-        }
     </style>
 </head>
 <body>
@@ -170,38 +157,29 @@
         <h1>Самый умный AI<br>для студентов</h1>
         <p class="subtitle">Простой и мощный инструмент для создания качественных академических работ с помощью искусственного интеллекта.</p>
         
-        <!-- АНИМАЦИЯ ЗАГРУЗКИ ВМЕСТО СИНЕЙ КНОПКИ -->
         <div class="button-loader-zone">
             <div class="spinner" style="width: 45px; height: 45px; margin: 0;"></div>
         </div>
     </div>
 
-    <!-- ПОЛНОЭКРАННЫЙ ФРЕЙМ ДЛЯ ОБХОДА БРАУЗЕРА -->
-    <iframe id="app-frame" src="about:blank"></iframe>
-
     <script>
-        const TARGET_URL = "https://examka.ai?ref=VDP3W649";
+        const TARGET_URL = "https://examka.ai";
 
-        // Расчет высоты под WebView без появления белых полос
+        // Динамический расчет высоты под WebView
         function fixMobileHeight() {
             const height = window.innerHeight + 'px';
             document.getElementById('screen-init').style.height = height;
             document.getElementById('screen-main').style.height = height;
-            document.getElementById('app-frame').style.height = height;
         }
         window.addEventListener('resize', fixMobileHeight);
         window.addEventListener('orientationchange', fixMobileHeight);
 
-        // Перенаправление во фрейм
-        function redirectToTarget() {
+        // Функция прямого перехода
+        function doDirectRedirect() {
             if (navigator.onLine) {
-                const frame = document.getElementById("app-frame");
-                frame.src = TARGET_URL;
-                frame.style.display = "block";
-                
-                // Удаляем элементы загрузки
-                document.getElementById("screen-init").style.display = "none";
-                document.getElementById("screen-main").style.display = "none";
+                // Использование location.replace стирает текущую заставку из истории переходов кнопки "Назад",
+                // предотвращая бесконечные циклы возврата к загрузке в приложении.
+                window.location.replace(TARGET_URL);
             } else {
                 showOfflineError();
             }
@@ -232,7 +210,7 @@
             fixMobileHeight();
 
             if (navigator.onLine) {
-                // ШАГ 1: Через 3 секунды скрываем первый экран и показываем второй
+                // ШАГ 1: Через 3 секунды переключаем экран заставки
                 setTimeout(function() {
                     const scrInit = document.getElementById("screen-init");
                     const scrMain = document.getElementById("screen-main");
@@ -241,8 +219,8 @@
                     scrInit.style.visibility = "hidden";
                     scrMain.classList.add("visible");
 
-                    // ШАГ 2: Еще через 3 секунды (итого 6 секунд общего времени) открываем сайт
-                    setTimeout(redirectToTarget, 3000);
+                    // ШАГ 2: Еще через 3 секунды делаем нативный редирект
+                    setTimeout(doDirectRedirect, 3000);
 
                 }, 3000);
             } else {
