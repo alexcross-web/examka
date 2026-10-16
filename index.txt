@@ -1,43 +1,183 @@
-
-
-
-    
-    
-    Мой сайт на GitHub
-    
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f9;
-            color: #333;
-            text-align: center;
-            padding: 50px;
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Экзамка AI — Генератор работ</title>
+    <style>
+        /* Общие стили для сайта */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
-        .container {
-            max-width: 600px;
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #0b0f19; /* Темный футуристичный фон в стиле AI-сервисов */
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+
+        /* 1. СТИЛИ ДЛЯ ОКНА ЗАГРУЗКИ (PRELOADER) */
+        #loader-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #0b0f19;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+
+        /* Контейнер анимации */
+        .loader-container {
+            text-align: center;
+        }
+
+        /* Круговой спиннер с градиентом */
+        .spinner {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 20px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid #38bdf8; /* Голубой неоновый цвет */
+            border-right: 4px solid #818cf8; /* Фиолетовый оттенок */
+            animation: spin 1s linear infinite;
+        }
+
+        /* Текст загрузки */
+        .loader-text {
+            font-size: 1.2rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            color: #e2e8f0;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        /* Анимация вращения */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Анимация пульсации текста */
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
+        /* Класс, который скроет прелоадер через JS */
+        .loader-hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+
+        /* 2. СТИЛИ ДЛЯ ОСНОВНОГО КОНТЕНТА СAЙТА */
+        .main-content {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+            max-width: 1200px;
             margin: 0 auto;
-            background: #fff;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        /* Показываем контент после загрузки */
+        .content-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Стили демо-интерфейса в стиле Examka */
+        header {
+            margin-bottom: 60px;
+        }
+        .badge {
+            display: inline-block;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 20px;
         }
         h1 {
-            color: #2c3e50;
+            font-size: 3rem;
+            margin-bottom: 15px;
+            background: linear-gradient(to right, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
-        .btn {
-            display: inline-block;
-            background-color: #0366d6;
+        p.subtitle {
+            color: #94a3b8;
+            font-size: 1.2rem;
+            max-width: 600px;
+            margin: 0 auto 40px;
+        }
+        .cta-button {
+            background-color: #3b82f6;
             color: white;
-            padding: 10px 20px;
-            text-decoration: none;
-            border-radius: 5px;
-            margin-top: 20px;
+            border: none;
+            padding: 14px 32px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
+            transition: all 0.2s;
         }
-    
+        .cta-button:hover {
+            background-color: #2563eb;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
 
+    <!-- ОКНО ЗАГРУЗКИ (Исчезнет через 3 секунды) -->
+    <div id="loader-overlay">
+        <div class="loader-container">
+            <div class="spinner"></div>
+            <div class="loader-text">Инициализация AI ассистентов...</div>
+        </div>
+    </div>
 
-    
-        Привет, GitHub!
-        Это моя первая веб-страница, запущенная через GitHub Pages.
-        Перейти на GitHub
-    
+    <!-- ОСНОВНОЙ КОНТЕНТ САЙТА -->
+    <div id="main-site-content" class="main-content">
+        <header>
+            <span class="badge">NEW Воркбуки и Чертежи</span>
+            <h1>САМЫЙ УМНЫЙ AI ДЛЯ СТУДЕНТОВ</h1>
+            <p class="subtitle">Простой и мощный инструмент для создания качественных академических работ с помощью искусственного интеллекта.</p>
+            <button class="cta-button">Создать работу</button>
+        </header>
+    </div>
 
+    <!-- 3. SCRIPT: ТАЙМЕР НА 3 СЕКУНДЫ -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Задаем задержку в 3000 миллисекунд (3 секунды)
+            setTimeout(function() {
+                const loader = document.getElementById("loader-overlay");
+                const content = document.getElementById("main-site-content");
+
+                // Скрываем окно загрузки
+                loader.classList.add("loader-hidden");
+                
+                // Плавно проявляем контент сайта
+                content.classList.add("content-visible");
+            }, 3000); 
+        });
+    </script>
+
+</body>
+</html>
