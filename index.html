@@ -2,39 +2,30 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <!-- viewport-fit=cover растягивает сайт под челку и экраны 18:9 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Экзамка AI —  Генератор работ</title>
+    <title>Экзамка AI</title>
     <style>
-        /* Жесткий сброс для мобильных WebView */
+        /* Полное обнуление отступов */
         html, body {
             width: 100% !important;
             height: 100% !important;
             margin: 0 !important;
             padding: 0 !important;
             background-color: #0b0f19;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             color: #ffffff;
-            overflow-x: hidden;
-        }
-        
-        /* Блокируем прокрутку во время загрузки */
-        body.loading {
-            overflow: hidden !important;
-            position: fixed;
+            overflow: hidden !important; /* Запрещаем любой скролл */
         }
 
         * {
             box-sizing: border-box;
         }
 
-        /* 1. АБСОЛЮТНЫЙ ПОЛНОЭКРАННЫЙ ПРЕЛОАДЕР */
+        /* 1. НЕПРОБИВАЕМЫЙ ПОЛНОЭКРАННЫЙ ПРЕЛОАДЕР */
         #loader-overlay {
-            position: fixed;
+            position: absolute; /* absolute точнее работает в WebView при скрытии статус-баров */
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
             width: 100%;
             height: 100%;
             background-color: #0b0f19;
@@ -43,14 +34,15 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            transition: opacity 0.5s ease, visibility 0.5s ease;
             margin: 0 !important;
             padding: 0 !important;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
         }
 
         .loader-container {
             text-align: center;
-            max-width: 90%;
+            width: 100%;
+            padding: 20px;
         }
 
         .spinner {
@@ -85,10 +77,9 @@
             background-color: #222531;
             color: #fff;
             border: 1px solid #3f445b;
-            padding: 8px 20px;
+            padding: 10px 24px;
             border-radius: 6px;
             cursor: pointer;
-            transition: background 0.2s;
         }
 
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -113,7 +104,7 @@
             font-weight: 500;
             box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
             z-index: 100000;
-            transition: top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: top 0.4s ease;
         }
         #offline-toast.show {
             top: 40px;
@@ -124,9 +115,13 @@
             opacity: 0;
             transform: translateY(20px);
             transition: opacity 0.8s ease, transform 0.8s ease;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 60px 20px;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
             text-align: center;
         }
 
@@ -135,9 +130,6 @@
             transform: translateY(0);
         }
 
-        header {
-            margin-bottom: 40px;
-        }
         .badge {
             display: inline-block;
             background: linear-gradient(90deg, #3b82f6, #8b5cf6);
@@ -149,7 +141,7 @@
             margin-bottom: 20px;
         }
         h1 {
-            font-size: 2.2rem;
+            font-size: 2rem;
             line-height: 1.2;
             margin-bottom: 15px;
             background: linear-gradient(to right, #fff, #94a3b8);
@@ -158,14 +150,13 @@
         }
         p.subtitle {
             color: #94a3b8;
-            font-size: 1.1rem;
+            font-size: 1rem;
             line-height: 1.5;
             margin-bottom: 40px;
+            max-width: 400px;
         }
         
-        /* Кнопка с JS-событием */
         .cta-button {
-            display: inline-block;
             background-color: #3b82f6;
             color: white;
             border: none;
@@ -175,16 +166,25 @@
             border-radius: 10px;
             cursor: pointer;
             box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
-            transition: all 0.2s;
             width: 100%;
             max-width: 280px;
         }
-        .cta-button:hover {
-            background-color: #2563eb;
+
+        /* 4. СКРЫТЫЙ СЛУЖЕБНЫЙ ФРЕЙМ */
+        #app-frame {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+            z-index: 99998;
+            background-color: #0b0f19;
         }
     </style>
 </head>
-<body class="loading"> <!-- Добавлен класс loading для фиксации -->
+<body>
 
     <div id="offline-toast">⚠️ Отсутствует подключение к интернету</div>
 
@@ -200,23 +200,42 @@
 
     <!-- ОСНОВНОЙ КОНТЕНТ САЙТА -->
     <div id="main-site-content" class="main-content">
-        <header>
-            <span class="badge">EXAMKA AI</span>
-            <h1>САМЫЙ УМНЫЙ AI ДЛЯ СТУДЕНТОВ</h1>
-            <p class="subtitle">Простой и мощный инструмент для создания качественных академических работ с помощью искусственного интеллекта.</p>
-            
-            <!-- КНОПКА С JS-ПЕРЕХОДОМ БЕЗ ССЫЛКИ -->
-            <button class="cta-button" onclick="navigateToExamka()">Создать работу</button>
-        </header>
+        <span class="badge">EXAMKA AI</span>
+        <h1>САМЫЙ УМНЫЙ AI ДЛЯ СТУДЕНТОВ</h1>
+        <p class="subtitle">Простой и мощный инструмент для создания качественных академических работ с помощью искусственного интеллекта.</p>
+        <button class="cta-button" onclick="openTargetSite()">Создать работу</button>
     </div>
 
+    <!-- СКРЫТЫЙ ФРЕЙМ ДЛЯ ОБХОДА ВНЕШНЕГО БРАУЗЕРА -->
+    <iframe id="app-frame" src="about:blank"></iframe>
+
     <script>
-        // Функция безопасного перехода внутри WebView
-        function navigateToExamka() {
-            window.location.href = "https://examka.ai";
+        // Принудительное выравнивание высоты под экраны мобильных устройств
+        function fixMobileHeight() {
+            const height = window.innerHeight + 'px';
+            document.getElementById('loader-overlay').style.height = height;
+            document.getElementById('main-site-content').style.height = height;
+        }
+        window.addEventListener('resize', fixMobileHeight);
+        window.addEventListener('orientationchange', fixMobileHeight);
+
+        // Функция открытия сайта внутри приложения через фрейм
+        function openTargetSite() {
+            if (navigator.onLine) {
+                const frame = document.getElementById("app-frame");
+                frame.src = "https://examka.ai";
+                frame.style.display = "block"; // Показываем фрейм во весь экран
+            } else {
+                document.getElementById("offline-toast").classList.add("show");
+                setTimeout(() => {
+                    document.getElementById("offline-toast").classList.remove("show");
+                }, 3000);
+            }
         }
 
         document.addEventListener("DOMContentLoaded", function() {
+            fixMobileHeight();
+            
             const loader = document.getElementById("loader-overlay");
             const spinner = document.getElementById("loader-spinner");
             const statusText = document.getElementById("loader-status-text");
@@ -230,7 +249,6 @@
                     setTimeout(function() {
                         loader.classList.add("loader-hidden");
                         content.classList.add("content-visible");
-                        document.body.classList.remove("loading"); // Разрешаем прокрутку контента
                     }, 3000);
                 } else {
                     spinner.style.borderTopColor = "#ef4444";
@@ -238,7 +256,7 @@
                     spinner.style.animation = "none"; 
                     statusText.textContent = "Нет сети";
                     statusText.classList.remove("pulse");
-                    errorMsg.style.style.display = "block";
+                    errorMsg.style.display = "block";
                     retryBtn.style.display = "block";
                 }
             }
