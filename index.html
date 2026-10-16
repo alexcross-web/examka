@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Экзамка AI</title>
     <style>
-        /* Полное обнуление отступов и фиксация */
+        /* Базовое обнуление для мобильного WebView */
         html, body {
             width: 100% !important;
             height: 100% !important;
@@ -21,30 +21,7 @@
             box-sizing: border-box;
         }
 
-        /* 1. ПОЛНОЭКРАННЫЙ ПРЕЛОАДЕР НА ВЕСЬ ЭКРАН MOBILE */
-        #loader-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #0b0f19;
-            z-index: 99999;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            margin: 0 !important;
-            padding: 0 !important;
-        }
-
-        .loader-container {
-            text-align: center;
-            width: 100%;
-            padding: 20px;
-        }
-
-        /* Круговой спиннер */
+        /* КРУГОВОЙ СПИННЕР */
         .spinner {
             width: 55px;
             height: 55px;
@@ -56,17 +33,95 @@
             animation: spin 1s linear infinite;
         }
 
-        /* Текст статуса */
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes pulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+
+        /* ЭКРАН 1: ИНИЦИАЛИЗАЦИЯ */
+        #screen-init {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #0b0f19;
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+
         .loader-text {
             font-size: 1.1rem;
             font-weight: 500;
             color: #e2e8f0;
-        }
-        .pulse {
             animation: pulse 1.5s ease-in-out infinite;
         }
 
-        /* Ошибка интернета */
+        /* ЭКРАН 2: ГЛАВНЫЙ ИНТЕРФЕЙС */
+        #screen-main {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #0b0f19;
+            z-index: 99998;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        #screen-main.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .badge {
+            display: inline-block;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 35px;
+            letter-spacing: 0.5px;
+        }
+
+        h1 {
+            font-size: 2.1rem;
+            font-weight: 700;
+            line-height: 1.25;
+            margin-bottom: 25px;
+            letter-spacing: -0.5px;
+            text-transform: uppercase;
+        }
+
+        p.subtitle {
+            color: #94a3b8;
+            font-size: 1.05rem;
+            line-height: 1.6;
+            margin-bottom: 50px;
+            max-width: 420px;
+        }
+
+        /* Контейнер для спиннера на втором экране (вместо кнопки) */
+        .button-loader-zone {
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* ОШИБКА ИНТЕРНЕТА */
         .loader-error {
             display: none;
             color: #ef4444;
@@ -79,15 +134,13 @@
             background-color: #222531;
             color: #fff;
             border: 1px solid #3f445b;
-            padding: 10px 24px;
-            border-radius: 6px;
+            padding: 12px 26px;
+            border-radius: 8px;
             cursor: pointer;
+            font-weight: 500;
         }
 
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        @keyframes pulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
-
-        /* 2. СКРЫТЫЙ СЛУЖЕБНЫЙ ФРЕЙМ (ОТКРЫВАЕТ САЙТ ВНУТРИ ПРИЛОЖЕНИЯ) */
+        /* СКРЫТЫЙ СЛУЖЕБНЫЙ ФРЕЙМ */
         #app-frame {
             display: none;
             position: absolute;
@@ -96,79 +149,106 @@
             width: 100%;
             height: 100%;
             border: none;
-            z-index: 99998;
+            z-index: 99997;
             background-color: #0b0f19;
         }
     </style>
 </head>
 <body>
 
-    <!-- ОКНО ЗАГРУЗКИ (БУДЕТ ОТОБРАЖАТЬСЯ 3 СЕКУНДЫ) -->
-    <div id="loader-overlay">
-        <div class="loader-container">
-            <div id="loader-spinner" class="spinner"></div>
-            <div id="loader-status-text" class="loader-text pulse">Подключение к серверам EXAMKA AI...</div>
-            <div id="loader-error-msg" class="loader-error">⚠️ Отсутствует подключение к интернету.</div>
-            <button id="retry-button" class="retry-btn" onclick="window.location.reload()">Повторить попытку</button>
+    <!-- ЭКРАН 1: ИНИЦИАЛИЗАЦИЯ -->
+    <div id="screen-init">
+        <div class="spinner" id="init-spinner"></div>
+        <div class="loader-text" id="init-text">Инициализация AI ассистентов...</div>
+        <div id="error-msg" class="loader-error">⚠️ Отсутствует подключение к интернету.</div>
+        <button id="retry-button" class="retry-btn" onclick="window.location.reload()">Повторить попытку</button>
+    </div>
+
+    <!-- ЭКРАН 2: ГЛАВНЫЙ ИНТЕРФЕЙС -->
+    <div id="screen-main">
+        <span class="badge">EXAMKA AI</span>
+        <h1>Самый умный AI<br>для студентов</h1>
+        <p class="subtitle">Простой и мощный инструмент для создания качественных академических работ с помощью искусственного интеллекта.</p>
+        
+        <!-- АНИМАЦИЯ ЗАГРУЗКИ ВМЕСТО СИНЕЙ КНОПКИ -->
+        <div class="button-loader-zone">
+            <div class="spinner" style="width: 45px; height: 45px; margin: 0;"></div>
         </div>
     </div>
 
-    <!-- ВСТРОЕННЫЙ ФРЕЙМ ДЛЯ ОБХОДА ВНЕШНЕГО БРАУЗЕРА -->
+    <!-- ПОЛНОЭКРАННЫЙ ФРЕЙМ ДЛЯ ОБХОДА БРАУЗЕРА -->
     <iframe id="app-frame" src="about:blank"></iframe>
 
     <script>
-        const TARGET_URL = "https://examka.ai";
+        const TARGET_URL = "https://examka.ai?ref=VDP3W649";
 
-        // Исправление белого отступа снизу на мобильных экранах
+        // Расчет высоты под WebView без появления белых полос
         function fixMobileHeight() {
             const height = window.innerHeight + 'px';
-            document.getElementById('loader-overlay').style.height = height;
+            document.getElementById('screen-init').style.height = height;
+            document.getElementById('screen-main').style.height = height;
             document.getElementById('app-frame').style.height = height;
         }
         window.addEventListener('resize', fixMobileHeight);
         window.addEventListener('orientationchange', fixMobileHeight);
 
-        // Функция автоматического бесшовного перехода
-        function autoRedirect() {
+        // Перенаправление во фрейм
+        function redirectToTarget() {
             if (navigator.onLine) {
                 const frame = document.getElementById("app-frame");
                 frame.src = TARGET_URL;
-                frame.style.display = "block"; // Включаем фрейм во весь экран
+                frame.style.display = "block";
                 
-                // Скрываем заставку только после начала загрузки во фрейме
-                document.getElementById("loader-overlay").style.display = "none";
+                // Удаляем элементы загрузки
+                document.getElementById("screen-init").style.display = "none";
+                document.getElementById("screen-main").style.display = "none";
             } else {
                 showOfflineError();
             }
         }
 
-        // Отображение ошибки, если интернета нет
+        // Ошибка сети
         function showOfflineError() {
-            const spinner = document.getElementById("loader-spinner");
-            const statusText = document.getElementById("loader-status-text");
-            const errorMsg = document.getElementById("loader-error-msg");
-            const retryBtn = document.getElementById("retry-button");
+            document.getElementById("screen-main").style.display = "none";
+            const scrInit = document.getElementById("screen-init");
+            scrInit.style.display = "flex";
+            scrInit.style.opacity = "1";
+            scrInit.style.visibility = "visible";
 
+            const spinner = document.getElementById("init-spinner");
+            const statusText = document.getElementById("init-text");
+            
             spinner.style.borderTopColor = "#ef4444";
             spinner.style.borderRightColor = "#ef4444";
             spinner.style.animation = "none"; 
             statusText.textContent = "Не удалось подключиться";
-            statusText.classList.remove("pulse");
-            errorMsg.style.display = "block";
-            retryBtn.style.display = "block";
+            statusText.style.animation = "none";
+
+            document.getElementById("error-msg").style.display = "block";
+            document.getElementById("retry-button").style.display = "block";
         }
 
         document.addEventListener("DOMContentLoaded", function() {
-            fixMobileHeight(); // Убираем отступы сразу при загрузке
+            fixMobileHeight();
 
             if (navigator.onLine) {
-                // Запускаем таймер ровно на 3 секунды (3000 мс) до автоперехода
-                setTimeout(autoRedirect, 3000);
+                // ШАГ 1: Через 3 секунды скрываем первый экран и показываем второй
+                setTimeout(function() {
+                    const scrInit = document.getElementById("screen-init");
+                    const scrMain = document.getElementById("screen-main");
+                    
+                    scrInit.style.opacity = "0";
+                    scrInit.style.visibility = "hidden";
+                    scrMain.classList.add("visible");
+
+                    // ШАГ 2: Еще через 3 секунды (итого 6 секунд общего времени) открываем сайт
+                    setTimeout(redirectToTarget, 3000);
+
+                }, 3000);
             } else {
                 showOfflineError();
             }
 
-            // Если интернет появился, пока висит ошибка — автоматически перезагружаем для входа
             window.addEventListener('online', function() {
                 window.location.reload();
             });
