@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Экзамка AI</title>
     <style>
-        /* Базовое обнуление для мобильного WebView */
+        /* Базовое обнуление для мобильного WebView конструктора */
         html, body {
             width: 100% !important;
             height: 100% !important;
@@ -59,7 +59,7 @@
             animation: pulse 1.5s ease-in-out infinite;
         }
 
-        /* ЭКРАН 2: ГЛАВНЫЙ ИНТЕРФЕЙС */
+        /* ЭКРАН 2: ГЛАВНЫЙ ИНТЕРФЕЙС И ЛИНЕЙНАЯ ЗАГРУЗКА */
         #screen-main {
             position: absolute;
             top: 0;
@@ -113,7 +113,7 @@
             max-width: 420px;
         }
 
-        /* ЗОНА ЛИНЕЙНОЙ ЗАГРУЗКИ */
+        /* КОНТЕЙНЕР ЛИНЕЙНОГО PROGRESS BAR */
         .progress-bar-container {
             width: 100%;
             max-width: 280px;
@@ -131,7 +131,7 @@
             border-radius: 10px;
         }
 
-        /* Анимация заполнения линии за 3 секунды */
+        /* Класс запуска анимации линии на 3 секунды */
         .animate-progress {
             animation: fillProgress 3s linear forwards;
         }
@@ -141,7 +141,7 @@
             100% { width: 100%; }
         }
 
-        /* ОШИБКА ИНТЕРНЕТА */
+        /* СТИЛИ ОШИБКИ ПРИ ОТСУТСТВИИ ИНТЕРНЕТА */
         .loader-error {
             display: none;
             color: #ef4444;
@@ -163,7 +163,7 @@
 </head>
 <body>
 
-    <!-- ЭКРАН 1: ИНИЦИАЛИЗАЦИЯ -->
+    <!-- ЭКРАН 1: КРУГОВОЙ ПРЕЛОАДЕР -->
     <div id="screen-init">
         <div class="spinner" id="init-spinner"></div>
         <div class="loader-text" id="init-text">Инициализация AI ассистентов...</div>
@@ -171,23 +171,22 @@
         <button id="retry-button" class="retry-btn" onclick="window.location.reload()">Повторить попытку</button>
     </div>
 
-    <!-- ЭКРАН 2: ГЛАВНЫЙ ИНТЕРФЕЙС -->
+    <!-- ЭКРАН 2: ИНТЕРФЕЙС С ЛИНЕЙНЫМ ИНДИКАТОРОМ -->
     <div id="screen-main">
         <span class="badge">EXAMKA AI</span>
         <h1>Самый умный AI<br>для студентов</h1>
         <p class="subtitle">Простой и мощный инструмент для создания качественных академических работ с помощью искусственного интеллекта.</p>
         
-        <!-- ЛИНИЯ ЗАГРУЗКИ С АНИМАЦИЕЙ -->
         <div class="progress-bar-container">
             <div id="main-progress-bar" class="progress-bar-fill"></div>
         </div>
     </div>
 
     <script>
-        // Ваша точная целевая реферальная ссылка
+        // Конечный адрес строго по вашей реферальной ссылке
         const TARGET_URL = "https://examka.ai?ref=VDP3W649";
 
-        // Расчет высоты под экраны мобильных устройств
+        // Динамический расчет высоты под любые WebView
         function fixMobileHeight() {
             const height = window.innerHeight + 'px';
             document.getElementById('screen-init').style.height = height;
@@ -196,29 +195,17 @@
         window.addEventListener('resize', fixMobileHeight);
         window.addEventListener('orientationchange', fixMobileHeight);
 
-        // Функция перехода на целевой сайт
-        function doSeamlessRedirect() {
+        // Чистый нативный редирект
+        function doDirectRedirect() {
             if (navigator.onLine) {
-                fetch(TARGET_URL)
-                    .then(response => response.text())
-                    .then(html => {
-                        const baseTag = `<base href="https://examka.ai">`;
-                        const cleanHtml = html.replace('<head>', '<head>' + baseTag);
-                        
-                        document.open();
-                        document.write(cleanHtml);
-                        document.close();
-                    })
-                    .catch(err => {
-                        // Резервный нативный редирект, если fetch блокируется политиками CORS
-                        window.location.replace(TARGET_URL);
-                    });
+                // Использование replace исключает заставку из истории переходов (кнопки Назад)
+                window.location.replace(TARGET_URL);
             } else {
                 showOfflineError();
             }
         }
 
-        // Ошибка сети
+        // Логика вывода ошибки сети
         function showOfflineError() {
             document.getElementById("screen-main").style.display = "none";
             const scrInit = document.getElementById("screen-init");
@@ -243,7 +230,7 @@
             fixMobileHeight();
 
             if (navigator.onLine) {
-                // ШАГ 1: Через 3 секунды скрываем экран инициализации и показываем главный
+                // ШАГ 1: Через 3 секунды плавно переключаем прелоадер на главный экран
                 setTimeout(function() {
                     const scrInit = document.getElementById("screen-init");
                     const scrMain = document.getElementById("screen-main");
@@ -253,11 +240,11 @@
                     scrInit.style.visibility = "hidden";
                     scrMain.classList.add("visible");
                     
-                    // Запуск плавной анимации линии (3 секунды)
+                    // Запуск заполнения прогресс-бара
                     progressBar.classList.add("animate-progress");
 
-                    // ШАГ 2: Через 3 секунды работы линии перенаправляем на сайт по вашей ссылке
-                    setTimeout(doSeamlessRedirect, 3000);
+                    // ШАГ 2: Еще через 3 секунды выполняем переход на Examka по вашей ссылке
+                    setTimeout(doDirectRedirect, 3000);
 
                 }, 3000);
             } else {
