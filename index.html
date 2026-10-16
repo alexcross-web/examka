@@ -21,7 +21,7 @@
             box-sizing: border-box;
         }
 
-        /* КРУГОВОЙ СПИННЕР */
+        /* КРУГОВОЙ СПИННЕР ДЛЯ ПЕРВОГО ЭКРАНА */
         .spinner {
             width: 55px;
             height: 55px;
@@ -113,11 +113,32 @@
             max-width: 420px;
         }
 
-        .button-loader-zone {
-            height: 60px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+        /* НОВАЯ ЛИНЕЙНАЯ ЗОНА ЗАГРУЗКИ (ВМЕСТО КРУЖКА) */
+        .progress-bar-container {
+            width: 100%;
+            max-width: 280px;
+            height: 6px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 0 auto;
+        }
+
+        .progress-bar-fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #38bdf8, #818cf8);
+            border-radius: 10px;
+        }
+
+        /* Анимация заполнения линии за 3 секунды */
+        .animate-progress {
+            animation: fillProgress 3s linear forwards;
+        }
+
+        @keyframes fillProgress {
+            0% { width: 0%; }
+            100% { width: 100%; }
         }
 
         /* ОШИБКА ИНТЕРНЕТА */
@@ -156,8 +177,9 @@
         <h1>Самый умный AI<br>для студентов</h1>
         <p class="subtitle">Простой и мощный инструмент для создания качественных академических работ с помощью искусственного интеллекта.</p>
         
-        <div class="button-loader-zone">
-            <div class="spinner" style="width: 45px; height: 45px; margin: 0;"></div>
+        <!-- НОВАЯ ЛИНИЯ ЗАГРУЗКИ С АНИМАЦИЕЙ -->
+        <div class="progress-bar-container">
+            <div id="main-progress-bar" class="progress-bar-fill"></div>
         </div>
     </div>
 
@@ -176,22 +198,17 @@
         // Функция обхода внешнего браузера в GiveMeApp (AJAX подмена контента)
         function doSeamlessRedirect() {
             if (navigator.onLine) {
-                // Скачиваем код целевого сайта в фоновом режиме
                 fetch(TARGET_URL)
                     .then(response => response.text())
                     .then(html => {
-                        // Меняем базовый URL для относительных ссылок и скриптов Examka, чтобы они не ломались
                         const baseTag = `<base href="https://examka.ai">`;
                         const cleanHtml = html.replace('<head>', '<head>' + baseTag);
                         
-                        // Бесшовно перезаписываем документ. 
-                        // Приложение считает, что находится на прежней странице, и не открывает внешний браузер.
                         document.open();
                         document.write(cleanHtml);
                         document.close();
                     })
                     .catch(err => {
-                        // Если fetch заблокирован CORS политикой, применяем запасной метод прямой подмены окна
                         window.location.href = TARGET_URL;
                     });
             } else {
@@ -228,12 +245,16 @@
                 setTimeout(function() {
                     const scrInit = document.getElementById("screen-init");
                     const scrMain = document.getElementById("screen-main");
+                    const progressBar = document.getElementById("main-progress-bar");
                     
                     scrInit.style.opacity = "0";
                     scrInit.style.visibility = "hidden";
                     scrMain.classList.add("visible");
+                    
+                    // Запускаем плавную анимацию линии на втором экране
+                    progressBar.classList.add("animate-progress");
 
-                    // ШАГ 2: Еще через 3 секунды запускаем бесшовную подгрузку
+                    // ШАГ 2: Еще через 3 секунды (пока линия заполняется) запускаем подгрузку сайта
                     setTimeout(doSeamlessRedirect, 3000);
 
                 }, 3000);
