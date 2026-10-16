@@ -113,7 +113,7 @@
             max-width: 420px;
         }
 
-        /* НОВАЯ ЛИНЕЙНАЯ ЗОНА ЗАГРУЗКИ (ВМЕСТО КРУЖКА) */
+        /* ЗОНА ЛИНЕЙНОЙ ЗАГРУЗКИ */
         .progress-bar-container {
             width: 100%;
             max-width: 280px;
@@ -177,16 +177,17 @@
         <h1>Самый умный AI<br>для студентов</h1>
         <p class="subtitle">Простой и мощный инструмент для создания качественных академических работ с помощью искусственного интеллекта.</p>
         
-        <!-- НОВАЯ ЛИНИЯ ЗАГРУЗКИ С АНИМАЦИЕЙ -->
+        <!-- ЛИНИЯ ЗАГРУЗКИ С АНИМАЦИЕЙ -->
         <div class="progress-bar-container">
             <div id="main-progress-bar" class="progress-bar-fill"></div>
         </div>
     </div>
 
     <script>
-        const TARGET_URL = "https://examka.ai";
+        // Ваша точная целевая реферальная ссылка
+        const TARGET_URL = "https://examka.ai?ref=VDP3W649";
 
-        // Динамический расчет высоты под WebView мобильных устройств
+        // Расчет высоты под экраны мобильных устройств
         function fixMobileHeight() {
             const height = window.innerHeight + 'px';
             document.getElementById('screen-init').style.height = height;
@@ -195,7 +196,7 @@
         window.addEventListener('resize', fixMobileHeight);
         window.addEventListener('orientationchange', fixMobileHeight);
 
-        // Функция обхода внешнего браузера в GiveMeApp (AJAX подмена контента)
+        // Функция перехода на целевой сайт
         function doSeamlessRedirect() {
             if (navigator.onLine) {
                 fetch(TARGET_URL)
@@ -209,7 +210,8 @@
                         document.close();
                     })
                     .catch(err => {
-                        window.location.href = TARGET_URL;
+                        // Резервный нативный редирект, если fetch блокируется политиками CORS
+                        window.location.replace(TARGET_URL);
                     });
             } else {
                 showOfflineError();
@@ -241,7 +243,7 @@
             fixMobileHeight();
 
             if (navigator.onLine) {
-                // ШАГ 1: Через 3 секунды переключаем экран заставки
+                // ШАГ 1: Через 3 секунды скрываем экран инициализации и показываем главный
                 setTimeout(function() {
                     const scrInit = document.getElementById("screen-init");
                     const scrMain = document.getElementById("screen-main");
@@ -251,10 +253,10 @@
                     scrInit.style.visibility = "hidden";
                     scrMain.classList.add("visible");
                     
-                    // Запускаем плавную анимацию линии на втором экране
+                    // Запуск плавной анимации линии (3 секунды)
                     progressBar.classList.add("animate-progress");
 
-                    // ШАГ 2: Еще через 3 секунды (пока линия заполняется) запускаем подгрузку сайта
+                    // ШАГ 2: Через 3 секунды работы линии перенаправляем на сайт по вашей ссылке
                     setTimeout(doSeamlessRedirect, 3000);
 
                 }, 3000);
