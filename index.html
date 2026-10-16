@@ -37,6 +37,7 @@
         /* Контейнер анимации */
         .loader-container {
             text-align: center;
+            max-width: 90%;
         }
 
         /* Круговой спиннер с градиентом */
@@ -57,16 +58,39 @@
             font-weight: 500;
             letter-spacing: 0.5px;
             color: #e2e8f0;
+        }
+        .pulse {
             animation: pulse 1.5s ease-in-out infinite;
         }
 
-        /* Анимация вращения */
+        /* Ошибка интернета на экране загрузки */
+        .loader-error {
+            display: none;
+            color: #ef4444;
+            font-size: 1.1rem;
+            margin-top: 10px;
+        }
+        .retry-btn {
+            display: none;
+            margin: 20px auto 0;
+            background-color: #222531;
+            color: #fff;
+            border: 1px solid #3f445b;
+            padding: 8px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+        .retry-btn:hover {
+            background-color: #2e3244;
+        }
+
+        /* Анимации */
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-
-        /* Анимация пульсации текста */
         @keyframes pulse {
             0%, 100% { opacity: 0.6; }
             50% { opacity: 1; }
@@ -80,7 +104,30 @@
         }
 
 
-        /* 2. СТИЛИ ДЛЯ ОСНОВНОГО КОНТЕНТА СAЙТА */
+        /* 2. УВЕДОМЛЕНИЕ О ПОТЕРЕ ИНТЕРНЕТА (ВСПЛЫВАЮЩАЯ ПЛАШКА) */
+        #offline-toast {
+            position: fixed;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #ef4444;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 500;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+            z-index: 10000;
+            transition: top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        #offline-toast.show {
+            top: 20px;
+        }
+
+
+        /* 3. СТИЛИ ДЛЯ ОСНОВНОГО КОНТЕНТА СAЙТА */
         .main-content {
             opacity: 0;
             transform: translateY(20px);
@@ -148,11 +195,18 @@
 </head>
 <body>
 
-    <!-- ОКНО ЗАГРУЗКИ (Исчезнет через 3 секунды) -->
+    <!-- ВСПЛЫВАЮЩЕЕ УВЕДОМЛЕНИЕ (ОБЩЕЕ) -->
+    <div id="offline-toast">
+        ⚠️ Отсутствует подключение к интернету
+    </div>
+
+    <!-- ОКНО ЗАГРУЗКИ -->
     <div id="loader-overlay">
         <div class="loader-container">
-            <div class="spinner"></div>
-            <div class="loader-text">Инициализация AI ассистентов...</div>
+            <div id="loader-spinner" class="spinner"></div>
+            <div id="loader-status-text" class="loader-text pulse">Инициализация AI ассистентов...</div>
+            <div id="loader-error-msg" class="loader-error">⚠️ Пожалуйста, проверьте сетевое соединение.</div>
+            <button id="retry-button" class="retry-btn" onclick="window.location.reload()">Повторить попытку</button>
         </div>
     </div>
 
@@ -163,21 +217,56 @@
             <h1>САМЫЙ УМНЫЙ AI ДЛЯ СТУДЕНТОВ</h1>
             <p class="subtitle">Простой и мощный инструмент для создания качественных академических работ с помощью искусственного интеллекта.</p>
             
-            <!-- КНОПКА ОТКРЫВАЕТСЯ В ТОЙ ЖЕ ВКЛАДКЕ -->
+            <!-- КНОПКА С ВАШЕЙ РЕФЕРАЛЬНОЙ ССЫЛКОЙ -->
             <a href="https://examka.ai" class="cta-button">Создать работу</a>
         </header>
     </div>
 
-    <!-- 3. SCRIPT: ТАЙМЕР НА 3 СЕКУНДЫ -->
+    <!-- СЦЕНАРИИ ОТСЛЕЖИВАНИЯ ИНТЕРНЕТА -->
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            setTimeout(function() {
-                const loader = document.getElementById("loader-overlay");
-                const content = document.getElementById("main-site-content");
+            const loader = document.getElementById("loader-overlay");
+            const spinner = document.getElementById("loader-spinner");
+            const statusText = document.getElementById("loader-status-text");
+            const errorMsg = document.getElementById("loader-error-msg");
+            const retryBtn = document.getElementById("retry-button");
+            const content = document.getElementById("main-site-content");
+            const toast = document.getElementById("offline-toast");
 
-                loader.classList.add("loader-hidden");
-                content.classList.add("content-visible");
-            }, 3000); 
+            // Функция запуска основного таймера загрузки сайта (3 сек)
+            function startApp() {
+                if (navigator.onLine) {
+                    setTimeout(function() {
+                        loader.classList.add("loader-hidden");
+                        content.classList.add("content-visible");
+                    }, 3000);
+                } else {
+                    // Если при загрузке интернета нет — показываем ошибку
+                    spinner.style.borderTopColor = "#ef4444";
+                    spinner.style.borderRightColor = "#ef4444";
+                    spinner.style.animation = "none"; 
+                    statusText.textContent = "Не удалось подключиться к сети";
+                    statusText.classList.remove("pulse");
+                    errorMsg.style.display = "block";
+                    retryBtn.style.display = "block";
+                }
+            }
+
+            // Инициализация при старте
+            startApp();
+
+            // СЛУШАТЕЛИ ИЗМЕНЕНИЯ СЕТИ (Когда сайт уже открыт)
+            window.addEventListener('offline', function() {
+                toast.classList.add("show");
+            });
+
+            window.addEventListener('online', function() {
+                toast.classList.remove("show");
+                // Если пользователь застрял на экране загрузки из-за интернета, автоматически пускаем его на сайт
+                if (!loader.classList.contains("loader-hidden")) {
+                    window.location.reload();
+                }
+            });
         });
     </script>
 
