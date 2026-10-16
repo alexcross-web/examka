@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Экзамка AI</title>
     <style>
-        /* Полное обнуление отступов */
+        /* Полное обнуление отступов и фиксация */
         html, body {
             width: 100% !important;
             height: 100% !important;
@@ -14,16 +14,16 @@
             background-color: #0b0f19;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             color: #ffffff;
-            overflow: hidden !important; /* Запрещаем любой скролл */
+            overflow: hidden !important;
         }
 
         * {
             box-sizing: border-box;
         }
 
-        /* 1. НЕПРОБИВАЕМЫЙ ПОЛНОЭКРАННЫЙ ПРЕЛОАДЕР */
+        /* 1. ПОЛНОЭКРАННЫЙ ПРЕЛОАДЕР НА ВЕСЬ ЭКРАН MOBILE */
         #loader-overlay {
-            position: absolute; /* absolute точнее работает в WebView при скрытии статус-баров */
+            position: absolute;
             top: 0;
             left: 0;
             width: 100%;
@@ -36,7 +36,6 @@
             align-items: center;
             margin: 0 !important;
             padding: 0 !important;
-            transition: opacity 0.5s ease, visibility 0.5s ease;
         }
 
         .loader-container {
@@ -45,6 +44,7 @@
             padding: 20px;
         }
 
+        /* Круговой спиннер */
         .spinner {
             width: 55px;
             height: 55px;
@@ -56,6 +56,7 @@
             animation: spin 1s linear infinite;
         }
 
+        /* Текст статуса */
         .loader-text {
             font-size: 1.1rem;
             font-weight: 500;
@@ -65,6 +66,7 @@
             animation: pulse 1.5s ease-in-out infinite;
         }
 
+        /* Ошибка интернета */
         .loader-error {
             display: none;
             color: #ef4444;
@@ -85,92 +87,7 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes pulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
 
-        .loader-hidden {
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
-        }
-
-        /* 2. ПЛАШКА ИНТЕРНЕТА */
-        #offline-toast {
-            position: fixed;
-            top: -100px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: #ef4444;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-weight: 500;
-            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
-            z-index: 100000;
-            transition: top 0.4s ease;
-        }
-        #offline-toast.show {
-            top: 40px;
-        }
-
-        /* 3. ОСНОВНОЙ КОНТЕНТ */
-        .main-content {
-            opacity: 0;
-            transform: translateY(20px);
-            transition: opacity 0.8s ease, transform 0.8s ease;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            text-align: center;
-        }
-
-        .content-visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .badge {
-            display: inline-block;
-            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
-            color: white;
-            padding: 6px 16px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            margin-bottom: 20px;
-        }
-        h1 {
-            font-size: 2rem;
-            line-height: 1.2;
-            margin-bottom: 15px;
-            background: linear-gradient(to right, #fff, #94a3b8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        p.subtitle {
-            color: #94a3b8;
-            font-size: 1rem;
-            line-height: 1.5;
-            margin-bottom: 40px;
-            max-width: 400px;
-        }
-        
-        .cta-button {
-            background-color: #3b82f6;
-            color: white;
-            border: none;
-            padding: 16px 36px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            border-radius: 10px;
-            cursor: pointer;
-            box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
-            width: 100%;
-            max-width: 280px;
-        }
-
-        /* 4. СКРЫТЫЙ СЛУЖЕБНЫЙ ФРЕЙМ */
+        /* 2. СКРЫТЫЙ СЛУЖЕБНЫЙ ФРЕЙМ (ОТКРЫВАЕТ САЙТ ВНУТРИ ПРИЛОЖЕНИЯ) */
         #app-frame {
             display: none;
             position: absolute;
@@ -186,89 +103,74 @@
 </head>
 <body>
 
-    <div id="offline-toast">⚠️ Отсутствует подключение к интернету</div>
-
-    <!-- ОКНО ЗАГРУЗКИ -->
+    <!-- ОКНО ЗАГРУЗКИ (БУДЕТ ОТОБРАЖАТЬСЯ 3 СЕКУНДЫ) -->
     <div id="loader-overlay">
         <div class="loader-container">
             <div id="loader-spinner" class="spinner"></div>
-            <div id="loader-status-text" class="loader-text pulse">Инициализация AI ассистентов...</div>
-            <div id="loader-error-msg" class="loader-error">⚠️ Пожалуйста, проверьте сеть.</div>
-            <button id="retry-button" class="retry-btn" onclick="window.location.reload()">Повторить</button>
+            <div id="loader-status-text" class="loader-text pulse">Подключение к серверам EXAMKA AI...</div>
+            <div id="loader-error-msg" class="loader-error">⚠️ Отсутствует подключение к интернету.</div>
+            <button id="retry-button" class="retry-btn" onclick="window.location.reload()">Повторить попытку</button>
         </div>
     </div>
 
-    <!-- ОСНОВНОЙ КОНТЕНТ САЙТА -->
-    <div id="main-site-content" class="main-content">
-        <span class="badge">EXAMKA AI</span>
-        <h1>САМЫЙ УМНЫЙ AI ДЛЯ СТУДЕНТОВ</h1>
-        <p class="subtitle">Простой и мощный инструмент для создания качественных академических работ с помощью искусственного интеллекта.</p>
-        <button class="cta-button" onclick="openTargetSite()">Создать работу</button>
-    </div>
-
-    <!-- СКРЫТЫЙ ФРЕЙМ ДЛЯ ОБХОДА ВНЕШНЕГО БРАУЗЕРА -->
+    <!-- ВСТРОЕННЫЙ ФРЕЙМ ДЛЯ ОБХОДА ВНЕШНЕГО БРАУЗЕРА -->
     <iframe id="app-frame" src="about:blank"></iframe>
 
     <script>
-        // Принудительное выравнивание высоты под экраны мобильных устройств
+        const TARGET_URL = "https://examka.ai";
+
+        // Исправление белого отступа снизу на мобильных экранах
         function fixMobileHeight() {
             const height = window.innerHeight + 'px';
             document.getElementById('loader-overlay').style.height = height;
-            document.getElementById('main-site-content').style.height = height;
+            document.getElementById('app-frame').style.height = height;
         }
         window.addEventListener('resize', fixMobileHeight);
         window.addEventListener('orientationchange', fixMobileHeight);
 
-        // Функция открытия сайта внутри приложения через фрейм
-        function openTargetSite() {
+        // Функция автоматического бесшовного перехода
+        function autoRedirect() {
             if (navigator.onLine) {
                 const frame = document.getElementById("app-frame");
-                frame.src = "https://examka.ai";
-                frame.style.display = "block"; // Показываем фрейм во весь экран
+                frame.src = TARGET_URL;
+                frame.style.display = "block"; // Включаем фрейм во весь экран
+                
+                // Скрываем заставку только после начала загрузки во фрейме
+                document.getElementById("loader-overlay").style.display = "none";
             } else {
-                document.getElementById("offline-toast").classList.add("show");
-                setTimeout(() => {
-                    document.getElementById("offline-toast").classList.remove("show");
-                }, 3000);
+                showOfflineError();
             }
         }
 
-        document.addEventListener("DOMContentLoaded", function() {
-            fixMobileHeight();
-            
-            const loader = document.getElementById("loader-overlay");
+        // Отображение ошибки, если интернета нет
+        function showOfflineError() {
             const spinner = document.getElementById("loader-spinner");
             const statusText = document.getElementById("loader-status-text");
             const errorMsg = document.getElementById("loader-error-msg");
             const retryBtn = document.getElementById("retry-button");
-            const content = document.getElementById("main-site-content");
-            const toast = document.getElementById("offline-toast");
 
-            function startApp() {
-                if (navigator.onLine) {
-                    setTimeout(function() {
-                        loader.classList.add("loader-hidden");
-                        content.classList.add("content-visible");
-                    }, 3000);
-                } else {
-                    spinner.style.borderTopColor = "#ef4444";
-                    spinner.style.borderRightColor = "#ef4444";
-                    spinner.style.animation = "none"; 
-                    statusText.textContent = "Нет сети";
-                    statusText.classList.remove("pulse");
-                    errorMsg.style.display = "block";
-                    retryBtn.style.display = "block";
-                }
+            spinner.style.borderTopColor = "#ef4444";
+            spinner.style.borderRightColor = "#ef4444";
+            spinner.style.animation = "none"; 
+            statusText.textContent = "Не удалось подключиться";
+            statusText.classList.remove("pulse");
+            errorMsg.style.display = "block";
+            retryBtn.style.display = "block";
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            fixMobileHeight(); // Убираем отступы сразу при загрузке
+
+            if (navigator.onLine) {
+                // Запускаем таймер ровно на 3 секунды (3000 мс) до автоперехода
+                setTimeout(autoRedirect, 3000);
+            } else {
+                showOfflineError();
             }
 
-            startApp();
-
-            window.addEventListener('offline', function() { toast.classList.add("show"); });
+            // Если интернет появился, пока висит ошибка — автоматически перезагружаем для входа
             window.addEventListener('online', function() {
-                toast.classList.remove("show");
-                if (!loader.classList.contains("loader-hidden")) {
-                    window.location.reload();
-                }
+                window.location.reload();
             });
         });
     </script>
