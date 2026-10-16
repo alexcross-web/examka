@@ -113,7 +113,6 @@
             max-width: 420px;
         }
 
-        /* Контейнер для спиннера на втором экране */
         .button-loader-zone {
             height: 60px;
             display: flex;
@@ -165,7 +164,7 @@
     <script>
         const TARGET_URL = "https://examka.ai";
 
-        // Динамический расчет высоты под WebView
+        // Динамический расчет высоты под WebView мобильных устройств
         function fixMobileHeight() {
             const height = window.innerHeight + 'px';
             document.getElementById('screen-init').style.height = height;
@@ -174,12 +173,27 @@
         window.addEventListener('resize', fixMobileHeight);
         window.addEventListener('orientationchange', fixMobileHeight);
 
-        // Функция прямого перехода
-        function doDirectRedirect() {
+        // Функция обхода внешнего браузера в GiveMeApp (AJAX подмена контента)
+        function doSeamlessRedirect() {
             if (navigator.onLine) {
-                // Использование location.replace стирает текущую заставку из истории переходов кнопки "Назад",
-                // предотвращая бесконечные циклы возврата к загрузке в приложении.
-                window.location.replace(TARGET_URL);
+                // Скачиваем код целевого сайта в фоновом режиме
+                fetch(TARGET_URL)
+                    .then(response => response.text())
+                    .then(html => {
+                        // Меняем базовый URL для относительных ссылок и скриптов Examka, чтобы они не ломались
+                        const baseTag = `<base href="https://examka.ai">`;
+                        const cleanHtml = html.replace('<head>', '<head>' + baseTag);
+                        
+                        // Бесшовно перезаписываем документ. 
+                        // Приложение считает, что находится на прежней странице, и не открывает внешний браузер.
+                        document.open();
+                        document.write(cleanHtml);
+                        document.close();
+                    })
+                    .catch(err => {
+                        // Если fetch заблокирован CORS политикой, применяем запасной метод прямой подмены окна
+                        window.location.href = TARGET_URL;
+                    });
             } else {
                 showOfflineError();
             }
@@ -219,8 +233,8 @@
                     scrInit.style.visibility = "hidden";
                     scrMain.classList.add("visible");
 
-                    // ШАГ 2: Еще через 3 секунды делаем нативный редирект
-                    setTimeout(doDirectRedirect, 3000);
+                    // ШАГ 2: Еще через 3 секунды запускаем бесшовную подгрузку
+                    setTimeout(doSeamlessRedirect, 3000);
 
                 }, 3000);
             } else {
